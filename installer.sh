@@ -5,11 +5,11 @@
 # Autobahn Node installation script: install and set up Nodes on supported Linux distributions
 # using CREATE3 Labs repositories.
 
-set -eEuox pipefail;
+set -eEuo pipefail;
 
 ( docker compose version 2>&1 || docker-compose version 2>&1 ) | grep -q v2 || { echo "docker compose v2 is required to run this script Please install it via https://docs.docker.com/compose/install/linux/#install-using-the-repository"; exit 1; }
 
-VERSION=1.0.0
+VERSION=1.0.1
 LOGFILE="anode-install.log"
 SUPPORT_EMAIL="support@create3labs.com"
 
@@ -28,11 +28,6 @@ function fallback_msg(){
 If you have problems, please send an email to ${SUPPORT_EMAIL}
 with the contents of ${LOGFILE} and any information you think would be
 useful and we will do our very best to help you solve your problem.\n"
-}
-
-function on_read_error() {
-  printf "Timed out or input EOF reached, assuming 'No'\n"
-  # yn="n"
 }
 
 function on_error() {
@@ -62,6 +57,11 @@ if [ -z ${NETWORK_ID+x} ]; then
   NETWORK_ID=45000;
 fi
 
+if [ -z ${BOOTNODES+x} ]; then
+  printf "%s" "Please set BOOTNODES variable to a bootnode..."
+  exit 1;
+fi
+
 if [ -z ${HOME+x} ]; then
   printf "%s" "Please set HOME to your home dir..."
   exit 1;
@@ -77,31 +77,6 @@ fi
 
 DATA_DIR=${HOME}/data/${NETWORK}
 CONFIG_DIR=${HOME}/config/${NETWORK}
-
-
-# OS/Distro Detection
-# Try lsb_release, fallback with /etc/issue then uname command
-KNOWN_DISTRIBUTION="(Debian|Ubuntu|RedHat|CentOS|openSUSE|Amazon|Arista|SUSE|Rocky|AlmaLinux)"
-DISTRIBUTION=$(lsb_release -d 2>/dev/null | grep -Eo $KNOWN_DISTRIBUTION  || grep -Eo $KNOWN_DISTRIBUTION /etc/issue 2>/dev/null || grep -Eo $KNOWN_DISTRIBUTION /etc/Eos-release 2>/dev/null || grep -m1 -Eo $KNOWN_DISTRIBUTION /etc/os-release 2>/dev/null || uname -s)
-
-if [ "$DISTRIBUTION" = "Darwin" ]; then
-    printf "%s" "\033[31mThis script does not support installing on the Mac.";
-    exit 1;
-
-elif [ -f /etc/debian_version ] || [ "$DISTRIBUTION" == "Debian" ] || [ "$DISTRIBUTION" == "Ubuntu" ]; then
-    OS="Debian"
-elif [ -f /etc/redhat-release ] || [ "$DISTRIBUTION" == "RedHat" ] || [ "$DISTRIBUTION" == "CentOS" ] || [ "$DISTRIBUTION" == "Amazon" ] || [ "$DISTRIBUTION" == "Rocky" ] || [ "$DISTRIBUTION" == "AlmaLinux" ]; then
-    OS="RedHat"
-# Some newer distros like Amazon may not have a redhat-release file
-elif [ -f /etc/system-release ] || [ "$DISTRIBUTION" == "Amazon" ]; then
-    OS="RedHat"
-# Arista is based off of Fedora14/18 but do not have /etc/redhat-release
-elif [ -f /etc/Eos-release ] || [ "$DISTRIBUTION" == "Arista" ]; then
-    OS="RedHat"
-# openSUSE and SUSE use /etc/SuSE-release or /etc/os-release
-elif [ -f /etc/SuSE-release ] || [ "$DISTRIBUTION" == "SUSE" ] || [ "$DISTRIBUTION" == "openSUSE" ]; then
-    OS="SUSE"
-fi
 
 # User detection. Needs to be user with uid 1000
 # @todo: Change to be any other user. Check https://github.com/create3labs/autobahn-nodes/blob/main/docker/docker-compose.yaml Line 10
@@ -123,7 +98,16 @@ if [ ! -d "${CONFIG_DIR}"  ]; then
 fi
 
 #### Loading and extracting the Repo
+cd ${HOME};
 curl -L $REPO_URL | tar xzv -C ./
-cd autobahn-nodes-$VERSION;
 
 #### executing the init script
+cd autobahn-nodes-$VERSION;
+./scripts/init.sh
+
+#### prepare some env vars
+sed -i "/BOOT_NODES.*/cBOOT_NODES=${BOOTNODES}" "${HOME}/autobahn-nodes-$VERSION/docker/nodes/.env"
+sed -i "/NETWORK_ID.*/cNETWORK_ID=${NETWORK_ID}" "${HOME}/autobahn-nodes-$VERSION/docker/nodes/.env"
+
+#### Launch
+./scripts/start.sh member
