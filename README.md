@@ -16,14 +16,14 @@ An easy to use installer for an autobahn node (Mainnet and Testnet)
 ### Mainnet
 ```
 export BOOTNODES=enode://c1e03e975a2685a75816daa38f2d8501a1fa9cf2c32b0f2a3ac1c4f7c1c579087aab078ff6ac0726eb6c107da77e777d4546e0080c621a127a5aa004c6668ef6@167.235.150.0:0?discport=30310 && \
-bash -c "$(curl -L https://github.com/create3labs/kickstart-autobahn-node/releases/download/v1.0.2/installer.sh)";
+bash -c "$(curl -L https://github.com/create3labs/kickstart-autobahn-node/releases/download/v1.0.3/installer.sh)";
 ```
 ### Testnet
 ```
 export BOOTNODES=enode://500706d4adc5a65f0454b02b3d574a112431d4d51b05572dfc9b2489e24ffd3017c6ef58dd9eea10f100806afaa212e285f5153a81422ffe128be75fa7ea015c@195.201.234.142:0?discport=30310 && \
 export NETWORK=autobahn-testnet && \
 export NETWORK_ID=45001 && \
-bash -c "$(curl -L https://github.com/create3labs/kickstart-autobahn-node/releases/download/v1.0.2/installer.sh)";
+bash -c "$(curl -L https://github.com/create3labs/kickstart-autobahn-node/releases/download/v1.0.3/installer.sh)";
 ```
 
 ## How to start?
