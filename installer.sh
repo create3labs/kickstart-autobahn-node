@@ -4,7 +4,6 @@
 # Licensed under MIT License (see LICENSE)
 # Autobahn Node installation script: install and set up Nodes on supported Linux distributions
 # using CREATE3 Labs repositories.
-
 set -eEuo pipefail;
 
 ( docker compose version 2>&1 || docker-compose version 2>&1 ) | grep -q v2 || { echo "docker compose v2 is required to run this script Please install it via https://docs.docker.com/compose/install/linux/#install-using-the-repository"; exit 1; }
@@ -12,6 +11,8 @@ set -eEuo pipefail;
 VERSION=1.0.1
 LOGFILE="anode-install.log"
 SUPPORT_EMAIL="support@create3labs.com"
+NODETYPE=$1;
+SIGNER_ADDRESS=$2;
 
 # Set up a named pipe for logging
 npipe=/tmp/$$.tmp
@@ -55,6 +56,11 @@ fi
 if [ -z ${NETWORK_ID+x} ]; then
   printf "%s" "setting network id to mainnet as default..."
   NETWORK_ID=45000;
+fi
+
+if [ -z ${NODETYPE+x} ]; then
+  printf "%s" "setting nodtype to default: member..."
+  NODETYPE="member";
 fi
 
 if [ -z ${BOOTNODES+x} ]; then
@@ -109,5 +115,9 @@ cd autobahn-nodes-$VERSION;
 sed -i "/BOOT_NODES.*/cBOOT_NODES=${BOOTNODES}" "${HOME}/autobahn-nodes-$VERSION/docker/nodes/.env"
 sed -i "/NETWORK_ID.*/cNETWORK_ID=${NETWORK_ID}" "${HOME}/autobahn-nodes-$VERSION/docker/nodes/.env"
 
+if [ -n "${SIGNER_ADDRESS}" ]; then
+  sed -i "/SIGNER_ADDRESS.*/cSIGNER_ADDRESS=${SIGNER_ADDRESS}" "${HOME}/autobahn-nodes-$VERSION/docker/nodes/signer/.env"
+fi
+
 #### Launch
-./scripts/start.sh member
+./scripts/start.sh ${NODETYPE}
