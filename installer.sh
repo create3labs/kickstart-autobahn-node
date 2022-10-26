@@ -8,7 +8,7 @@ set -eEuo pipefail;
 
 ( docker compose version 2>&1 || docker-compose version 2>&1 ) | grep -q v2 || { echo "docker compose v2 is required to run this script Please install it via https://docs.docker.com/compose/install/linux/#install-using-the-repository"; exit 1; }
 
-VERSION=1.0.2
+VERSION=1.0.3
 LOGFILE="anode-install.log"
 SUPPORT_EMAIL="support@create3labs.com"
 
