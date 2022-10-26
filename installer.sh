@@ -11,8 +11,6 @@ set -eEuo pipefail;
 VERSION=1.0.1
 LOGFILE="anode-install.log"
 SUPPORT_EMAIL="support@create3labs.com"
-NODETYPE=$1;
-SIGNER_ADDRESS=$2;
 
 # Set up a named pipe for logging
 npipe=/tmp/$$.tmp
@@ -94,18 +92,18 @@ fi
 printf "%s" "Creating DATADIR ${DATA_DIR}...";
 if [ ! -d "${DATA_DIR}" ]; then
   printf "%s" "Does not exist. Creating data dir..."
-  mkdir -p ${DATA_DIR};
+  mkdir -p "${DATA_DIR}";
 fi
 
 printf "%s" "Creating CONFIG_DIR ${CONFIG_DIR}...";
 if [ ! -d "${CONFIG_DIR}"  ]; then
   printf "%s" "Does not exist. Creating config dir...";
-  mkdir -p ${CONFIG_DIR};
+  mkdir -p "${CONFIG_DIR}";
 fi
 
 #### Loading and extracting the Repo
-cd ${HOME};
-curl -L $REPO_URL | tar xzv -C ./
+cd "${HOME}";
+curl -L "${REPO_URL}" | tar xzv -C ./
 
 #### executing the init script
 cd autobahn-nodes-$VERSION;
@@ -115,8 +113,24 @@ cd autobahn-nodes-$VERSION;
 sed -i "/BOOT_NODES.*/cBOOT_NODES=${BOOTNODES}" "${HOME}/autobahn-nodes-$VERSION/docker/nodes/.env"
 sed -i "/NETWORK_ID.*/cNETWORK_ID=${NETWORK_ID}" "${HOME}/autobahn-nodes-$VERSION/docker/nodes/.env"
 
+if [ "${NODETYPE}" == "signer" ]; then
+  if [ -z "${SIGNER_ADDRESS}" ]; then
+    printf "%s" "Please set SIGNER_ADDRESS as second parameter..."
+    exit 1;
+  fi
+
+  if [ ! -f "${HOME}/data/password.txt" ]; then
+    printf "%s" "Does not exist. Creating config dir..."
+    exit 1;
+  fi
+
+  if [ ! -d "${HOME}/data/${NETWORK}/keystore" ]; then
+    mkdir -p "${HOME}/data/${NETWORK}/keystore";
+  fi
+fi
+
 if [ -n "${SIGNER_ADDRESS}" ]; then
-  sed -i "/SIGNER_ADDRESS.*/cSIGNER_ADDRESS=${SIGNER_ADDRESS}" "${HOME}/autobahn-nodes-$VERSION/docker/nodes/signer/.env"
+  sed -i "/SIGNER_ADDRESS.*/cSIGNER_ADDRESS=${SIGNER_ADDRESS}" "${HOME}/autobahn-nodes-$VERSION/docker/nodes/signer/.env";
 fi
 
 #### Launch
