@@ -134,4 +134,5 @@ if [ -n "${SIGNER_ADDRESS}" ]; then
 fi
 
 #### Launch
+cd autobahn-nodes-$VERSION;
 ./scripts/start.sh ${NODETYPE}
